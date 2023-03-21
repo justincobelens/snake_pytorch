@@ -3,14 +3,16 @@ import random
 import numpy as np
 from collections import deque
 from game import SnakeGame, Direction, Point, BLOCK_SIZE
-from model import Linear_Qnet, QTrainer
+from model import LinearQnet, QTrainer
 from helper import plot
-
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1_000
 LR = 0.001
+EPOCHS = 1_000
 
+
+# TODO: Add something to prevent overwriting older models by accident
 
 class Agent:
 
@@ -20,12 +22,15 @@ class Agent:
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft() if MAX_MEMORY is reached
 
-        self.model = Linear_Qnet(11, 256, 3)  # (states, hidden_size, action(forward, left, right))
+        self.model = LinearQnet(11, 256, 3)  # (states, hidden_size, action(forward, left, right))
+
+        # TODO: Load model if one exists or load checkpoint
+        self.model.load()
+
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
-        #  TODO: model, trainer
-
-    def get_state(self, game):
+    @staticmethod
+    def get_state(game):
         head = game.snake[0]
 
         point_l = Point(head.x - BLOCK_SIZE, head.y)
@@ -127,10 +132,10 @@ def train():
         state_new = agent.get_state(game)
 
         # train short memory
-        agent.train_short_memory(state=state_old, action=final_move, reward=reward, next_state=state_new, done=done)
+        agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
         # remember
-        agent.remember(state=state_old, action=final_move, reward=reward, next_state=state_new, done=done)
+        agent.remember(state_old, final_move, reward, state_new, done)
 
         if done:
             # train long memory, plot results
@@ -140,7 +145,12 @@ def train():
 
             if score > record:
                 record = score
-                agent.model.save()
+                agent.model.save(file_name='model.pth')
+
+            if EPOCHS:
+                if agent.n_games > EPOCHS:
+                    print(f'STOPPING.. Reached EPOCH: {EPOCHS}.')
+                    break
 
             print(f'Game: {agent.n_games} | Score: {score} | Record: {record}')
 
