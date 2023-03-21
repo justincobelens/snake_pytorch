@@ -1,4 +1,10 @@
 .idea
-*.xml
 .DS_Store
+
+*.xml
 *.pyc
+
+*.pth
+*.tar
+
+model/
