@@ -43,7 +43,7 @@ class QTrainer:
             next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
-            done = done(done, )  # redefine as a tuple with 1 value
+            done = (done, )  # redefine as a tuple with 1 value
 
 
         # 1: predicted Q values with current state
