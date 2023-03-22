@@ -5,14 +5,16 @@ from pathlib import Path
 
 
 class LinearQnet(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
         super().__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, output_size)
+        self.linear1 = nn.Linear(input_size, hidden_size1)
+        self.linear2 = nn.Linear(hidden_size1, hidden_size2)
+        self.linear3 = nn.Linear(hidden_size2, output_size)
 
     def forward(self, x):
         x = F.relu(self.linear1(x))
-        x = self.linear2(x)
+        x = F.relu(self.linear2(x))
+        x = self.linear3(x)
         return x
 
     def save(self, file_name='model.pth'):
@@ -27,7 +29,7 @@ class LinearQnet(nn.Module):
 
         if file_path.exists():
             self.load_state_dict(torch.load(file_path))
-            self.eval()
+            self.train()
 
     # TODO: fix checkpoint save and load
     def save_checkpoint(self, epoch, optimizer_state_dict, loss, file_name='checkpoint.tar'):
@@ -70,13 +72,16 @@ class QTrainer:
             self.epoch = checkpoint['epoch']
             self.loss = checkpoint['loss']
 
-            self.model.eval()
+            self.model.train()
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float)
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.float)
         reward = torch.tensor(reward, dtype=torch.float)
+
+
+
 
         if len(state.shape) == 1:
             state = torch.unsqueeze(state, 0)
@@ -85,7 +90,9 @@ class QTrainer:
             reward = torch.unsqueeze(reward, 0)
             done = (done,)  # redefine as a tuple with 1 value
 
+
         # 1: predicted Q values with current state
+        self.model.train()
         pred = self.model(state)
 
         # 2: Q_nes = r + y * max(next_predicted Q value) -> only do this if not done
@@ -105,3 +112,7 @@ class QTrainer:
         loss.backward()
 
         self.optimizer.step()
+
+        return loss
+
+

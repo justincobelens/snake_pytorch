@@ -22,11 +22,9 @@ class Agent:
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft() if MAX_MEMORY is reached
 
-        self.model = LinearQnet(11, 256, 3)  # (states, hidden_size, action(forward, left, right))
-
+        self.model = LinearQnet(11, 256, 128, 3)  # (states, hidden_size, action(forward, left, right))
         # TODO: Load model if one exists or load checkpoint
-        self.model.load()
-
+        # self.model.load()
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     @staticmethod
@@ -86,10 +84,10 @@ class Agent:
             mini_sample = self.memory
 
         states, actions, rewards, next_states, dones = zip(*mini_sample)  # unpack and zip
-        self.train_short_memory(states, actions, rewards, next_states, dones)
+        return self.train_short_memory(states, actions, rewards, next_states, dones)
 
     def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
+        return self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
         # random moves: tradeoff between exploration / exploitation
@@ -117,6 +115,8 @@ def train():
     total_score = 0
     record = 0
 
+    train_loss_values = []
+
     agent = Agent()
     game = SnakeGame()
 
@@ -141,12 +141,15 @@ def train():
             # train long memory, plot results
             game.reset()
             agent.n_games += 1
-            agent.train_long_memory()
+            loss = agent.train_long_memory()
 
+            # TODO: save checkpoints instead of whole model
             if score > record:
                 record = score
-                agent.model.save(file_name='model.pth')
+                agent.model.save(file_name='model2.pth')
+                print(f"\nSAVING.. Saving on epoch: {agent.n_games}\n")
 
+            # TODO: save checkpoints instead of whole model
             if EPOCHS:
                 if agent.n_games > EPOCHS:
                     print(f'STOPPING.. Reached EPOCH: {EPOCHS}.')
@@ -154,11 +157,14 @@ def train():
 
             print(f'Game: {agent.n_games} | Score: {score} | Record: {record}')
 
+            train_loss_values.append(loss)
             plot_scores.append(score)
             total_score += score
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
+            plot(plot_scores, plot_mean_scores, train_loss_values)
+
+
 
 
 if __name__ == '__main__':
