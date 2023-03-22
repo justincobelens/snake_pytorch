@@ -1,3 +1,4 @@
+import numpy
 import torch
 import random
 import numpy as np
@@ -14,12 +15,13 @@ EPOCHS = 1_000
 
 
 # TODO: Give the snake more states, some ideas:
-# 1. Distance to food, something like its Euclidean distance between head and food
-# 2. Free space, calculate free blocks around snakes head
-# 3. Body direction, representation of second block to the head
-# 4. Tail position or tail relative position, so it stops endlessly chasing its tail
-# 5. Foods position relative to body instead of head
-# 6. Curvature of snake, something like the angle between head and first to following body segments
+#  1. [DONE] Distance to food, something like its Euclidean distance between head and food
+#  1. maybe using bins to group distances together so it can be represented as bools
+#  2. Free space, calculate free blocks around snakes head
+#  3. Body direction, representation of second block to the head
+#  4. Tail position or tail relative position, so it stops endlessly chasing its tail
+#  5. Foods position relative to body instead of head
+#  6. Curvature of snake, something like the angle between head and first to following body part
 
 
 class Agent:
@@ -30,7 +32,7 @@ class Agent:
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft() if MAX_MEMORY is reached
 
-        self.model = LinearQnet(11, 256, 128, 3)  # (states, hidden_size, action(forward, left, right))
+        self.model = LinearQnet(15, 256, 128, 3)  # (states, hidden_size, action(forward, left, right))
         # TODO: Load model if one exists or load checkpoint
         # self.model.load()
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
@@ -48,6 +50,14 @@ class Agent:
         dir_r = game.direction == Direction.RIGHT
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
+
+        bins = 4  # CAN CHANGE, maximum bins(groups of blocks) to be considered
+        max_distance = 100  # CAN CHANGE, maximum distance to be considered
+        bin_width = max_distance / bins
+        distance = np.sqrt((game.head.x - game.food.x) ** 2 + (game.head.y - game.food.y) ** 2)
+        bin_idx = min(int(distance // bin_width), bins - 1)  # prevents idx to be bigger than bins
+        one_hot_distance = [0] * bins
+        one_hot_distance[bin_idx] = 1
 
         state = [
             # Danger straight (checks if direction moves into a collision)
@@ -78,7 +88,11 @@ class Agent:
             game.food.x < game.head.x,  # food left
             game.food.x > game.head.x,  # food right
             game.food.y < game.head.y,  # food up
-            game.food.y > game.head.y  # food down
+            game.food.y > game.head.y,  # food down
+
+            # Distance to food (binned and one-hot encoded)
+            *one_hot_distance
+
         ]
         return np.array(state, dtype=int)  # change bools to 1 or 0
 
@@ -100,14 +114,14 @@ class Agent:
     def get_action(self, state):
         # random moves: tradeoff between exploration / exploitation
 
-        self.epsilon = 80 - self.n_games  # change if needed
+        self.epsilon = 200 - self.n_games  # change if needed
         final_move = [0, 0, 0]
 
         # the tradeoff logic
-        if random.randint(0, 20) < self.epsilon:
+        if random.randint(0, 500) < self.epsilon:  # random move
             move = random.randint(0, 2)
             final_move[move] = 1
-        else:
+        else:  # predicted move
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
@@ -156,13 +170,13 @@ def train():
             # TODO: save checkpoints instead of whole model
             if score > record:
                 record = score
-                agent.model.save(file_name='model.pth')
+                agent.model.save(file_name='model1.pth')
                 print(f"\nSAVING.. Saving on epoch: {agent.n_games} with record: {record}\n")
 
             # TODO: save checkpoints instead of whole model
             if EPOCHS:
                 if agent.n_games > EPOCHS:
-                    print(f'STOPPING.. Reached EPOCH: {EPOCHS} with record: {record}.')
+                    print(f'STOPPING.. Reached EPOCH: {agent.n_games}/{EPOCHS} with record: {record}.')
                     break
 
             print(f'Game: {agent.n_games} | Score: {score} | Record: {record}')
@@ -173,8 +187,6 @@ def train():
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
             update_plots(fig, axs, plot_scores, plot_mean_scores, train_loss_values)
-
-
 
 
 if __name__ == '__main__':

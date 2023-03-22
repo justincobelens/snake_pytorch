@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from pathlib import Path
 
+# this is where the models are saved
 MODELS_DIR_PATH = Path('models')
 MODELS_DIR_PATH.mkdir(parents=True, exist_ok=True)
+
 
 # TODO: Add something to prevent overwriting older models by accident
 
@@ -40,7 +42,8 @@ class LinearQnet(nn.Module):
             'epoch': epoch,
             'model_state_dict': self.state_dict(),
             'optimizer_state_dict': optimizer_state_dict.state_dict(),
-            'loss': loss
+            'loss': loss  # , 'record': record
+
         }, f=FILE_PATH)
 
     # TODO: fix checkpoint save and load

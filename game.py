@@ -36,16 +36,19 @@ BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 20
-SPEED = 1_000
+SPEED = 1000
 
+# TODO: ISSUES
+#  1. snake traps itself with its body
+#  2. snake runs after its tail
 
 # TODO: Add different rewards to avoid encircling, some ideas:
-# 1. Distance to food, reward if distance to food decreases
-# 2. Penalize turns, penalize unnecessary turns
-# 3. Survival reward, reward for every step it survives
-# 4. Empty space reward, reward on the amount of empty space head is heading
-# 5. Body proximity penalty, penalise for moving closer to body
-# 6. Body avoidance reward, reward from moving away from body
+#  1. [DONE, but ugly] Distance to food, reward if distance to food decreases
+#  2. Penalize turns, penalize unnecessary turns
+#  3. Survival reward, reward for every step it survives
+#  4. Empty space reward, reward on the amount of empty space head is heading
+#  5. Body proximity penalty, penalise for moving closer to body
+#  6. Body avoidance reward, reward from moving away from body
 
 
 class SnakeGame:
@@ -90,21 +93,28 @@ class SnakeGame:
                 quit()
 
         # 2. move
+        old_distance_to_food = np.sqrt(np.square(self.head.x - self.food.x)
+                                       + np.square(self.head.y - self.food.y))
+
         self._move(action)  # update the head
         self.snake.insert(0, self.head)
 
+        new_distance_to_food = np.sqrt(np.square(self.head.x - self.food.x)
+                                       + np.square(self.head.y - self.food.y))
+
+        reward = old_distance_to_food - new_distance_to_food  # CAN CHANGE
+
         # 3. check if game over
-        reward = 0
         game_over = False
         if self.is_collision() or self.frame_iteration > 100 * len(self.snake):
             game_over = True
-            reward = -10
+            reward = -10  # CAN CHANGE
             return reward, game_over, self.score
 
         # 4. place new food or just move
         if self.head == self.food:
             self.score += 1
-            reward = 10
+            reward = 10  # CAN CHANGE
             self._place_food()
         else:
             self.snake.pop()
