@@ -58,7 +58,7 @@ class Agent:
         free_cells_around_head = sum(1 for point in points if not game.is_collision(point))
         normalized_free_cells = free_cells_around_head // 4
 
-        # euclidean distance in bins
+        # euclidean distance to food in bins
         bins = 4  # CAN CHANGE, maximum bins(groups of blocks) to be considered
         max_distance = 100  # CAN CHANGE, maximum distance to be considered
         bin_width = max_distance / bins
@@ -66,6 +66,15 @@ class Agent:
         bin_idx = min(int(distance // bin_width), bins - 1)  # prevents idx to be bigger than bins
         one_hot_distance = [0] * bins
         one_hot_distance[bin_idx] = 1
+
+        # euclidean distance to tail in bins
+        # bins = 4  # CAN CHANGE, maximum bins(groups of blocks) to be considered
+        # max_distance = 100  # CAN CHANGE, maximum distance to be considered
+        # bin_width = max_distance / bins
+        # distance = np.sqrt((game.head.x - game.food.x) ** 2 + (game.head.y - game.food.y) ** 2)
+        # bin_idx = min(int(distance // bin_width), bins - 1)  # prevents idx to be bigger than bins
+        # one_hot_distance = [0] * bins
+        # one_hot_distance[bin_idx] = 1
 
         state = [
             # Danger straight (checks if direction moves into a collision)
@@ -125,11 +134,11 @@ class Agent:
     def get_action(self, state):
         # random moves: tradeoff between exploration / exploitation
 
-        self.epsilon = 200 - self.n_games  # change if needed
+        self.epsilon = 250 - self.n_games  # change if needed
         final_move = [0, 0, 0]
 
         # the tradeoff logic
-        if random.randint(0, 500) < self.epsilon:  # random move
+        if random.randint(0, 625) < self.epsilon:  # random move
             move = random.randint(0, 2)
             final_move[move] = 1
         else:  # predicted move
@@ -181,7 +190,7 @@ def train():
             # TODO: save checkpoints instead of whole model
             if score > record:
                 record = score
-                agent.model.save(file_name='model1.pth')
+                agent.model.save(file_name='model2.pth')
                 print(f"\nSAVING.. Saving on epoch: {agent.n_games} with record: {record}\n")
 
             # TODO: save checkpoints instead of whole model

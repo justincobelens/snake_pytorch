@@ -36,7 +36,7 @@ BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 20
-SPEED = 1000
+SPEED = 1_000
 
 # TODO: ISSUES
 #  1. snake traps itself with its body
@@ -93,16 +93,15 @@ class SnakeGame:
                 quit()
 
         # 2. move
-        old_distance_to_food = np.sqrt(np.square(self.head.x - self.food.x)
-                                       + np.square(self.head.y - self.food.y))
+        old_distance_to_food = np.sqrt((self.head.x - self.food.x) ** 2 + (self.head.y - self.food.y) ** 2)
 
         self._move(action)  # update the head
         self.snake.insert(0, self.head)
 
-        new_distance_to_food = np.sqrt(np.square(self.head.x - self.food.x)
-                                       + np.square(self.head.y - self.food.y))
+        new_distance_to_food = np.sqrt((self.head.x - self.food.x) ** 2 + (self.head.y - self.food.y) ** 2)
 
-        reward = old_distance_to_food - new_distance_to_food  # CAN CHANGE
+        reward = (old_distance_to_food - new_distance_to_food) / 4  # CAN CHANGE
+
 
         # 3. check if game over
         game_over = False
