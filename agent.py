@@ -2,17 +2,25 @@ import torch
 import random
 import numpy as np
 from collections import deque
+
 from game import SnakeGame, Direction, Point, BLOCK_SIZE
 from model import LinearQnet, QTrainer
 from helper import create_plots, update_plots
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1_000
-LR = 0.0005
+LR = 0.001
 EPOCHS = 1_000
 
 
-# TODO: Add something to prevent overwriting older models by accident
+# TODO: Give the snake more states, some ideas:
+# 1. Distance to food, something like its Euclidean distance between head and food
+# 2. Free space, calculate free blocks around snakes head
+# 3. Body direction, representation of second block to the head
+# 4. Tail position or tail relative position, so it stops endlessly chasing its tail
+# 5. Foods position relative to body instead of head
+# 6. Curvature of snake, something like the angle between head and first to following body segments
+
 
 class Agent:
 
@@ -96,7 +104,7 @@ class Agent:
         final_move = [0, 0, 0]
 
         # the tradeoff logic
-        if random.randint(0, 200) < self.epsilon:
+        if random.randint(0, 20) < self.epsilon:
             move = random.randint(0, 2)
             final_move[move] = 1
         else:
@@ -148,13 +156,13 @@ def train():
             # TODO: save checkpoints instead of whole model
             if score > record:
                 record = score
-                agent.model.save(file_name='model2.pth')
-                print(f"\nSAVING.. Saving on epoch: {agent.n_games}\n")
+                agent.model.save(file_name='model.pth')
+                print(f"\nSAVING.. Saving on epoch: {agent.n_games} with record: {record}\n")
 
             # TODO: save checkpoints instead of whole model
             if EPOCHS:
                 if agent.n_games > EPOCHS:
-                    print(f'STOPPING.. Reached EPOCH: {EPOCHS}.')
+                    print(f'STOPPING.. Reached EPOCH: {EPOCHS} with record: {record}.')
                     break
 
             print(f'Game: {agent.n_games} | Score: {score} | Record: {record}')

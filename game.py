@@ -8,11 +8,11 @@ pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
 
 
-#  reset
-#  reward
-#  play(action) -> direction
-#  game_iteration
-#  is_collision
+# 1) reset
+# 2) reward
+# 3) play(action) -> direction
+# 4) game_iteration
+# 5) is_collision
 
 
 class Direction(Enum):
@@ -24,6 +24,10 @@ class Direction(Enum):
 
 Point = namedtuple('Point', 'x, y')
 
+# game window size (pixels)
+WIDTH = 640
+HEIGHT = 480
+
 # rgb colors
 WHITE = (255, 255, 255)
 RED = (200, 0, 0)
@@ -32,12 +36,21 @@ BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 20
-SPEED = 50_000
+SPEED = 1_000
+
+
+# TODO: Add different rewards to avoid encircling, some ideas:
+# 1. Distance to food, reward if distance to food decreases
+# 2. Penalize turns, penalize unnecessary turns
+# 3. Survival reward, reward for every step it survives
+# 4. Empty space reward, reward on the amount of empty space head is heading
+# 5. Body proximity penalty, penalise for moving closer to body
+# 6. Body avoidance reward, reward from moving away from body
 
 
 class SnakeGame:
 
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=WIDTH, h=HEIGHT):
         self.w = w
         self.h = h
 
@@ -131,7 +144,7 @@ class SnakeGame:
         pygame.display.flip()
 
     def _move(self, action):
-        ## Calculate direction
+        # calculate direction
         #  [straight, right, left]
         clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clock_wise.index(self.direction)
@@ -149,7 +162,7 @@ class SnakeGame:
 
         self.direction = new_dir
 
-        ## Update move
+        # update move
         x = self.head.x
         y = self.head.y
 

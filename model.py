@@ -3,6 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from pathlib import Path
 
+MODELS_DIR_PATH = Path('models')
+MODELS_DIR_PATH.mkdir(parents=True, exist_ok=True)
+
+# TODO: Add something to prevent overwriting older models by accident
+
 
 class LinearQnet(nn.Module):
     def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
@@ -18,39 +23,32 @@ class LinearQnet(nn.Module):
         return x
 
     def save(self, file_name='model.pth'):
-        model_folder_path = Path('model')
-        model_folder_path.mkdir(parents=True, exist_ok=True)
-        file_path = model_folder_path / Path(file_name)
-        torch.save(self.state_dict(), f=file_path)
+        FILE_PATH = MODELS_DIR_PATH / Path(file_name)
+        torch.save(self.state_dict(), f=FILE_PATH)
 
     def load(self, file_name='model.pth'):
-        model_folder_path = Path('model')
-        file_path = model_folder_path / Path(file_name)
+        FILE_PATH = MODELS_DIR_PATH / Path(file_name)
 
-        if file_path.exists():
-            self.load_state_dict(torch.load(file_path))
+        if FILE_PATH.exists():
+            self.load_state_dict(torch.load(FILE_PATH))
             # self.train()
 
     # TODO: fix checkpoint save and load
     def save_checkpoint(self, epoch, optimizer_state_dict, loss, file_name='checkpoint.tar'):
-        model_folder_path = Path('model')
-        model_folder_path.mkdir(parents=True, exist_ok=True)
-
-        file_path = model_folder_path / Path(file_name)
+        FILE_PATH = MODELS_DIR_PATH / Path(file_name)
         torch.save({
             'epoch': epoch,
             'model_state_dict': self.state_dict(),
             'optimizer_state_dict': optimizer_state_dict.state_dict(),
             'loss': loss
-        }, f=file_path)
+        }, f=FILE_PATH)
 
     # TODO: fix checkpoint save and load
     def load_checkpoint(self, file_name='checkpoint.tar'):
-        model_folder_path = Path('model')
-        file_path = model_folder_path / Path(file_name)
+        FILE_PATH = MODELS_DIR_PATH / Path(file_name)
 
-        if file_path.exists():
-            checkpoint = torch.load(file_path)
+        if FILE_PATH.exists():
+            checkpoint = torch.load(FILE_PATH)
             return checkpoint
         else:
             return None
@@ -80,16 +78,12 @@ class QTrainer:
         action = torch.tensor(action, dtype=torch.float)
         reward = torch.tensor(reward, dtype=torch.float)
 
-
-
-
         if len(state.shape) == 1:
             state = torch.unsqueeze(state, 0)
             next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
             done = (done,)  # redefine as a tuple with 1 value
-
 
         # 1: predicted Q values with current state
         # self.model.train()
@@ -114,5 +108,3 @@ class QTrainer:
         self.optimizer.step()
 
         return loss
-
-
