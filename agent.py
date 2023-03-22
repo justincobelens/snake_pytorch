@@ -32,7 +32,7 @@ class Agent:
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft() if MAX_MEMORY is reached
 
-        self.model = LinearQnet(15, 256, 128, 3)  # (states, hidden_size, action(forward, left, right))
+        self.model = LinearQnet(16, 256, 128, 3)  # (states, hidden_size, action(forward, left, right))
         # TODO: Load model if one exists or load checkpoint
         # self.model.load()
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
@@ -41,16 +41,24 @@ class Agent:
     def get_state(game):
         head = game.snake[0]
 
-        point_l = Point(head.x - BLOCK_SIZE, head.y)
-        point_r = Point(head.x + BLOCK_SIZE, head.y)
-        point_u = Point(head.x, head.y - BLOCK_SIZE)
-        point_d = Point(head.x, head.y + BLOCK_SIZE)
-
+        # direction of snake
         dir_l = game.direction == Direction.LEFT
         dir_r = game.direction == Direction.RIGHT
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
 
+        # next points
+        point_l = Point(head.x - BLOCK_SIZE, head.y)  # left
+        point_r = Point(head.x + BLOCK_SIZE, head.y)  # right
+        point_u = Point(head.x, head.y - BLOCK_SIZE)  # up
+        point_d = Point(head.x, head.y + BLOCK_SIZE)  # down
+
+        # point awareness, free points around snakes head
+        points = [point_l, point_r, point_u, point_d]
+        free_cells_around_head = sum(1 for point in points if not game.is_collision(point))
+        normalized_free_cells = free_cells_around_head // 4
+
+        # euclidean distance in bins
         bins = 4  # CAN CHANGE, maximum bins(groups of blocks) to be considered
         max_distance = 100  # CAN CHANGE, maximum distance to be considered
         bin_width = max_distance / bins
@@ -84,14 +92,17 @@ class Agent:
             dir_u,
             dir_d,
 
-            # Food location, gives direction of food
+            # Food location rel to head
             game.food.x < game.head.x,  # food left
             game.food.x > game.head.x,  # food right
             game.food.y < game.head.y,  # food up
             game.food.y > game.head.y,  # food down
 
             # Distance to food (binned and one-hot encoded)
-            *one_hot_distance
+            *one_hot_distance,
+
+            # Point awareness
+            normalized_free_cells
 
         ]
         return np.array(state, dtype=int)  # change bools to 1 or 0
