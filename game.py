@@ -32,7 +32,7 @@ BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 20
-SPEED = 10_000
+SPEED = 50_000
 
 
 class SnakeGame:

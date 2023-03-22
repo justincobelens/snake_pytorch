@@ -29,7 +29,7 @@ class LinearQnet(nn.Module):
 
         if file_path.exists():
             self.load_state_dict(torch.load(file_path))
-            self.train()
+            # self.train()
 
     # TODO: fix checkpoint save and load
     def save_checkpoint(self, epoch, optimizer_state_dict, loss, file_name='checkpoint.tar'):
@@ -72,7 +72,7 @@ class QTrainer:
             self.epoch = checkpoint['epoch']
             self.loss = checkpoint['loss']
 
-            self.model.train()
+            # self.model.train()
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float)
@@ -92,7 +92,7 @@ class QTrainer:
 
 
         # 1: predicted Q values with current state
-        self.model.train()
+        # self.model.train()
         pred = self.model(state)
 
         # 2: Q_nes = r + y * max(next_predicted Q value) -> only do this if not done

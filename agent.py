@@ -8,7 +8,7 @@ from helper import create_plots, update_plots
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1_000
-LR = 0.001
+LR = 0.0005
 EPOCHS = 1_000
 
 
@@ -49,16 +49,16 @@ class Agent:
             (dir_d and game.is_collision(point_d)),
 
             # Danger right
-            (dir_r and game.is_collision(point_r)) or
-            (dir_l and game.is_collision(point_l)) or
-            (dir_u and game.is_collision(point_u)) or
-            (dir_d and game.is_collision(point_d)),
-
-            # Danger left
             (dir_u and game.is_collision(point_r)) or
             (dir_d and game.is_collision(point_l)) or
             (dir_l and game.is_collision(point_u)) or
             (dir_r and game.is_collision(point_d)),
+
+            # Danger left
+            (dir_d and game.is_collision(point_r)) or
+            (dir_u and game.is_collision(point_l)) or
+            (dir_r and game.is_collision(point_u)) or
+            (dir_l and game.is_collision(point_d)),
 
             # Move direction, only 1 is True
             dir_l,

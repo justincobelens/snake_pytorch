@@ -51,15 +51,17 @@ def update_plots(fig, axs, scores, mean_scores, train_loss_values):
     axs[0].clear()
     axs[1].clear()
 
-    axs[0].set(ylabel='Score')
+    axs[0].set(xlabel='Number of Games', ylabel='Score')
     axs[0].plot(scores, label='Scores')
     axs[0].plot(mean_scores, label='Mean Scores')
     axs[0].legend(loc='upper left')
     axs[0].text(len(scores) - 1, scores[-1], str(scores[-1]))
     axs[0].text(len(mean_scores) - 1, mean_scores[-1], str(mean_scores[-1]))
 
+    train_loss_values = np.array(torch.tensor(train_loss_values).numpy())
     axs[1].set(xlabel='Number of Games', ylabel='Loss')
-    axs[1].plot(np.array(torch.tensor(train_loss_values).numpy()), label='Loss')
+    axs[1].plot(train_loss_values, label='Loss', color='red')
     axs[1].legend(loc='upper left')
+    axs[1].text(len(train_loss_values) - 1, train_loss_values[-1], str(train_loss_values[-1]))
 
     display.display(fig)
