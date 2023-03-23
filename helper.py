@@ -45,6 +45,16 @@ def create_plots():
     return fig, axs
 
 
+# TODO: calculating the all the ma's on every plot update is just stupid
+#  Add it to the agent.py or something
+#  Or create a dataclass
+def moving_average(scores, games):
+    if len(scores) < games:
+        return [np.mean(scores[:i+1]) for i in range(len(scores))]
+    else:
+        return [np.mean(scores[i-games:i+1]) for i in range(len(scores))]
+
+
 def update_plots(fig, axs, scores, mean_scores, train_loss_values):
     clear_output(wait=True)
 
@@ -52,15 +62,24 @@ def update_plots(fig, axs, scores, mean_scores, train_loss_values):
     axs[1].clear()
 
     axs[0].set(xlabel='Number of Games', ylabel='Score')
-    axs[0].plot(scores, label='Scores')
-    axs[0].plot(mean_scores, label='Mean Scores')
+
+    ma_5 = moving_average(scores, 5)
+    ma_25 = moving_average(scores, 25)
+    axs[0].plot(scores, label='Score')
+    axs[0].plot(mean_scores, label='Mean')
+    axs[0].plot(ma_5, label='MA(5)')
+    axs[0].plot(ma_25, label='MA(25)')
+
     axs[0].legend(loc='upper left')
     axs[0].text(len(scores) - 1, scores[-1], str(scores[-1]))
     axs[0].text(len(mean_scores) - 1, mean_scores[-1], str(mean_scores[-1]))
+    axs[0].text(len(ma_5) - 1, ma_5[-1], str(ma_5[-1]))
+    axs[0].text(len(ma_25) - 1, ma_25[-1], str(ma_25[-1]))
 
     train_loss_values = np.array(torch.tensor(train_loss_values).numpy())
     axs[1].set(xlabel='Number of Games', ylabel='Loss')
     axs[1].plot(train_loss_values, label='Loss', color='red')
+
     axs[1].legend(loc='upper left')
     axs[1].text(len(train_loss_values) - 1, train_loss_values[-1], str(train_loss_values[-1]))
 

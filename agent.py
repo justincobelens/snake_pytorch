@@ -11,7 +11,7 @@ from helper import create_plots, update_plots
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1_000
 LR = 0.001
-EPOCHS = 1_000
+EPOCHS = 2_000
 
 
 # TODO: Give the snake more states, some ideas:
@@ -32,7 +32,7 @@ class Agent:
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft() if MAX_MEMORY is reached
 
-        self.model = LinearQnet(16, 256, 128, 3)  # (states, hidden_size, action(forward, left, right))
+        self.model = LinearQnet(20, 256, 256, 128, 3)  # (states, hidden_size, action(forward, left, right))
         # TODO: Load model if one exists or load checkpoint
         # self.model.load()
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
@@ -40,6 +40,7 @@ class Agent:
     @staticmethod
     def get_state(game):
         head = game.snake[0]
+        snake_body = game.snake[1:]
 
         # direction of snake
         dir_l = game.direction == Direction.LEFT
@@ -53,10 +54,16 @@ class Agent:
         point_u = Point(head.x, head.y - BLOCK_SIZE)  # up
         point_d = Point(head.x, head.y + BLOCK_SIZE)  # down
 
+        # Free space around snake's head
+        points = [point_l, point_r, point_u, point_d]
+        snake_positions = set((segment.x, segment.y) for segment in game.snake)
+        free_cells_around_head = [1 if not game.is_collision(point) and (point.x, point.y) not in snake_positions else 0
+                                  for point in points]
+
         # point awareness, free points around snakes head
         points = [point_l, point_r, point_u, point_d]
-        free_cells_around_head = sum(1 for point in points if not game.is_collision(point))
-        normalized_free_cells = free_cells_around_head // 4
+        free_points_around_head = sum(1 for point in points if not game.is_collision(point))
+        normalized_free_cells = free_points_around_head // 4
 
         # euclidean distance to food in bins
         bins = 4  # CAN CHANGE, maximum bins(groups of blocks) to be considered
@@ -111,8 +118,10 @@ class Agent:
             *one_hot_distance,
 
             # Point awareness
-            normalized_free_cells
+            normalized_free_cells,
 
+            # Free space around head
+            *free_cells_around_head
         ]
         return np.array(state, dtype=int)  # change bools to 1 or 0
 
@@ -134,11 +143,11 @@ class Agent:
     def get_action(self, state):
         # random moves: tradeoff between exploration / exploitation
 
-        self.epsilon = 250 - self.n_games  # change if needed
+        self.epsilon = 200 - self.n_games  # change if needed
         final_move = [0, 0, 0]
 
         # the tradeoff logic
-        if random.randint(0, 625) < self.epsilon:  # random move
+        if random.randint(0, 500) < self.epsilon:  # random move
             move = random.randint(0, 2)
             final_move[move] = 1
         else:  # predicted move
@@ -172,7 +181,7 @@ def train():
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score = game.play_step(final_move)
+        reward, done, score = game.play_step(final_move, record, agent.n_games)
         state_new = agent.get_state(game)
 
         # train short memory

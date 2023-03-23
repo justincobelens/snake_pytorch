@@ -36,11 +36,11 @@ BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 20
-SPEED = 1_000
+SPEED = 10_000
 
 # TODO: ISSUES
 #  1. snake traps itself with its body
-#  2. snake runs after its tail
+#  2. snake runs after its tail [Should be fixed]
 
 # TODO: Add different rewards to avoid encircling, some ideas:
 #  1. [DONE, but ugly] Distance to food, reward if distance to food decreases
@@ -84,7 +84,7 @@ class SnakeGame:
         if self.food in self.snake:
             self._place_food()
 
-    def play_step(self, action):
+    def play_step(self, action, high_score, epoch):
         self.frame_iteration += 1
         # 1. collect user input
         for event in pygame.event.get():
@@ -99,27 +99,28 @@ class SnakeGame:
         self.snake.insert(0, self.head)
 
         new_distance_to_food = np.sqrt((self.head.x - self.food.x) ** 2 + (self.head.y - self.food.y) ** 2)
-
-        reward = (old_distance_to_food - new_distance_to_food) / 4  # CAN CHANGE
-
+        reward = min((old_distance_to_food - new_distance_to_food) / 4, 5)  # CAN CHANGE, reward for moving to food
 
         # 3. check if game over
         game_over = False
         if self.is_collision() or self.frame_iteration > 100 * len(self.snake):
             game_over = True
-            reward = -10  # CAN CHANGE
+            reward = -10  # CAN CHANGE, reward for dying
             return reward, game_over, self.score
 
         # 4. place new food or just move
         if self.head == self.food:
             self.score += 1
-            reward = 10  # CAN CHANGE
+            reward += 10  # CAN CHANGE, reward for eating food
             self._place_food()
         else:
             self.snake.pop()
 
+            # distance_reward = (old_distance_to_food - new_distance_to_food) / 4  # CAN CHANGE, reward for moving to food
+            # reward += min(pygame.time.get_ticks() / 100_000, 1)  # CAN CHANGE, reward for staying alive
+
         # 5. update ui and clock
-        self._update_ui()
+        self._update_ui(high_score, epoch)
         self.clock.tick(SPEED)
 
         # 6. return game over and score
@@ -139,7 +140,7 @@ class SnakeGame:
 
         return False
 
-    def _update_ui(self):
+    def _update_ui(self, high_score, epoch):
         self.display.fill(BLACK)
 
         for pt in self.snake:
@@ -149,7 +150,11 @@ class SnakeGame:
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
         text = font.render("Score: " + str(self.score), True, WHITE)
-        self.display.blit(text, [0, 0])
+        self.display.blit(text, [4, 0])
+        text1 = font.render("High Score: " + str(high_score), True, WHITE)
+        self.display.blit(text1, [WIDTH - 175, 0])
+        text2 = font.render("Epoch: " + str(epoch), True, WHITE)
+        self.display.blit(text2, [4, 30])
         pygame.display.flip()
 
     def _move(self, action):
