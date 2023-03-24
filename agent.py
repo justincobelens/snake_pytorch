@@ -16,8 +16,8 @@ EPOCHS = 2_000
 
 # TODO: Give the snake more states, some ideas:
 #  1. [DONE] Distance to food, something like its Euclidean distance between head and food
-#  1. maybe using bins to group distances together so it can be represented as bools
-#  2. Free space, calculate free blocks around snakes head
+#  1. [DONE] maybe using bins to group distances together so it can be represented as bools
+#  2. [DONE] Free space, calculate free blocks around snakes head
 #  3. Body direction, representation of second block to the head
 #  4. Tail position or tail relative position, so it stops endlessly chasing its tail
 #  5. Foods position relative to body instead of head
@@ -196,13 +196,13 @@ def train():
             agent.n_games += 1
             loss = agent.train_long_memory()
 
-            # TODO: save checkpoints instead of whole model
+            # TODO: save checkpoints instead of model
             if score > record:
                 record = score
-                agent.model.save(file_name='model2.pth')
+                agent.model.save(file_name='model3.pth')
                 print(f"\nSAVING.. Saving on epoch: {agent.n_games} with record: {record}\n")
 
-            # TODO: save checkpoints instead of whole model
+            # TODO: save checkpoints instead of model
             if EPOCHS:
                 if agent.n_games > EPOCHS:
                     print(f'STOPPING.. Reached EPOCH: {agent.n_games}/{EPOCHS} with record: {record}.')
